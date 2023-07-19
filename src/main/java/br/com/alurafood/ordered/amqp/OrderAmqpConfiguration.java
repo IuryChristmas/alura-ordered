@@ -35,6 +35,7 @@ public class OrderAmqpConfiguration {
     public Queue queueDetailsOrder() {
         return QueueBuilder
                 .nonDurable("payments.details-order")
+                .deadLetterExchange("payments.dlx")
                 .build();
     }
 
@@ -46,9 +47,29 @@ public class OrderAmqpConfiguration {
     }
 
     @Bean
-    public Binding bindPaymentOrder(FanoutExchange fanoutExchange) {
+    public FanoutExchange deadLetterExchange() {
+        return ExchangeBuilder
+                .fanoutExchange("payments.dlx")
+                .build();
+    }
+
+    @Bean
+    public Queue queueDlqDetailsOrder() {
+        return QueueBuilder
+                .nonDurable("payments.details-order-dlq")
+                .build();
+    }
+
+    @Bean
+    public Binding bindPaymentOrder() {
         return BindingBuilder.bind(queueDetailsOrder())
-                .to(fanoutExchange);
+                .to(fanoutExchange());
+    }
+
+    @Bean
+    public Binding bindDlxPaymentOrder() {
+        return BindingBuilder.bind(queueDetailsOrder())
+                .to(deadLetterExchange());
     }
 
     @Bean
